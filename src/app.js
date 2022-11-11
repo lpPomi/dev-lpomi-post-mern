@@ -34,6 +34,11 @@ app.use(
   fileUpload({
     useTempFiles: true, // --> if you want to save the images local
     tempFileDir: './upload', // --> is the local directory to save the images
+    limits: { fileSize: 2 * 1024 * 1024 }, // is equivalent to 2 MBytes
+    abortOnLimit: false,
+    // safeFileNames: true,
+    // preserveExtension: 3, // --> if you want to have the extention
+    responseOnLimit: 'Image greater than 2 Mbyte !',
   })
 );
 

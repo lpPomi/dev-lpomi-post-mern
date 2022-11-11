@@ -13,7 +13,7 @@ const postSchema = new mongoose.Schema({
   },
   image: {
     // public_id: String,
-    url: String,
+    type: String,
   },
 });
 
