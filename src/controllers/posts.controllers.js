@@ -44,7 +44,12 @@ export const getPost = async (req, res) => {
   try {
     const { id } = req.params;
     const post = await Post.findById(id);
-    if (!post) return res.sendStatus(404);
+
+    // id no post return a message
+    if (!post) {
+      return res.sendStatus(404);
+    }
+    // if post return the post message
     return res.json(post);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -102,8 +107,9 @@ export const createPost = async (req, res) => {
         'new post object without image ready to be saved in mongoDB',
         newPost
       );
-
+      // sdave the object in mongo server
       await newPost.save();
+      // output the object in the console
       return res.json(newPost);
     } else {
       //console.log('Image siizew = ', req.files.image.size);
@@ -123,7 +129,7 @@ export const createPost = async (req, res) => {
 
         // get the image name typed by user
         var fileNamefromUser = req.files.image.name;
-        //console.log('file_pat', fileNamefromUser);
+        //console.log('fileNamefromUser', fileNamefromUser);
 
         //  Split the name and extention in LINUX or MAC
         var fileNameSplit = fileNamefromUser.split('.');
@@ -145,16 +151,16 @@ export const createPost = async (req, res) => {
           // if image is not null and the extension is correct
           // then prepare the image to be saved in the server
 
-          // get the image name from fileUpload to be saved local
-          var file_path = req.files.image.tempFilePath;
-          console.log('file_pat', file_path);
+          // get the image name from fileUpload to be saved it local
+          var filePath = req.files.image.tempFilePath;
+          //console.log('filePath', filePath);
 
           // Split in Windows Systems Environment
-          //var file_split = file_path.split("\\");
+          //var fileSplit = filePath.split("\\");
 
           //  Split in LINUX or MAC
-          var file_split = file_path.split('/');
-          //console.log('File Split', file_split);
+          var fileSplit = filePath.split('/');
+          //console.log('File Split', fileSplit);
 
           var mimeType = req.files.image.mimetype.split('/');
           //console.log('mimeType', mimeType);
@@ -170,11 +176,11 @@ export const createPost = async (req, res) => {
           //console.log('In Controller uploadPath =', uploadPath);
 
           // file name
-          var file_name = file_split[1] + '.' + mimeTypeExt;
-          //console.log('file_name', file_name);
+          var fileName = fileSplit[1] + '.' + mimeTypeExt;
+          //console.log('fileName', fileName);
 
-          const srcToRename = uploadPath + '/' + file_split[1];
-          const destToRename = uploadPath + '/' + file_name;
+          const srcToRename = uploadPath + '/' + fileSplit[1];
+          const destToRename = uploadPath + '/' + fileName;
           //console.log('Source =', srcToRename);
           //console.log('Dest =', destToRename);
 
@@ -191,7 +197,7 @@ export const createPost = async (req, res) => {
           let image = null;
           //let imageUrl = __dirname + '/' + req.files.image.tempFilePath;
           //let imageUrl = req.files.image.tempFilePath;
-          let imageUrl = 'upload/' + file_name;
+          let imageUrl = 'upload/' + fileName;
 
           // search for the path to upload the image ?
           //const __filename = fileURLToPath(import.meta.url);
@@ -220,27 +226,25 @@ export const createPost = async (req, res) => {
           /*  console.log(req.body);
         return res.send(req.body); */
         }
-      }
-
-      if (req.files.image.size >= imageMaxSize) {
+      } else if (req.files.image.size >= imageMaxSize) {
         console.log('###############################');
         console.log('Post with image exceeded size!');
         console.log('###############################');
 
         // get the image name from fileUpload to be saved local
-        var file_path = req.files.image.tempFilePath;
-        console.log('file_pat', file_path);
+        var filePath = req.files.image.tempFilePath;
+        console.log('filePath', filePath);
 
         //  Split in LINUX or MAC
-        var file_split = file_path.split('/');
-        console.log('File Split', file_split);
+        var fileSplit = filePath.split('/');
+        console.log('File Split', fileSplit);
 
-        var file_name = file_split[1];
-        console.log('file_name', file_name);
+        var fileName = fileSplit[1];
+        console.log('fileName', fileName);
 
         console.log('File Size ', req.files.image.size);
 
-        fs.remove('upload/' + file_name, function (err) {
+        fs.remove('upload/' + fileName, function (err) {
           if (err) return console.error(err);
           console.log('remove success!');
         });
@@ -286,6 +290,7 @@ export const updatePost = async (req, res) => {
 export const removePost = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(id);
     const removedPost = await Post.findByIdAndDelete(id);
     console.log(removedPost);
 
@@ -295,21 +300,19 @@ export const removePost = async (req, res) => {
     if (!removedPost) return res.sendStatus(404);
     //if (!removedPost) return res.send('no post found!');
 
-    //console.log(removedPost.image);
+    //console.log('SHOW the image object', removedPost.image);
 
-    if (removedPost.image !== null) {
-      //console.log('Image exist');
+    // the standard way to catch null and undefined simultaneously is this:
+    if (removedPost.image == null) {
+      console.log('Image do not exist');
+    } else {
+      console.log('Image exist');
       fs.remove(removedPost.image, function (err) {
         if (err) return console.error(err);
         console.log('remove success!');
       });
-    } else console.log('Image do not exist');
-    /* 
-    fs.remove('/tmp/myfile', function (err) {
-      if (err) return console.error(err);
-      console.log('remove success!');
-    });
- */
+    }
+
     return res.sendStatus(204);
   } catch (error) {
     return res.status(500).json({ message: error.message });
