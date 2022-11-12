@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 
 import fs from 'fs-extra';
 
+// dont upload node_modules folder
+
 //and use the db connection
 //connectDB();
 

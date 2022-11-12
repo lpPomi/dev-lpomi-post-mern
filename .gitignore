@@ -1,8 +1,2 @@
-# nodejs
 node_modules
-
-# build
-dist
-
-# enviroment variables
 .env
