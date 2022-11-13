@@ -14,11 +14,19 @@ import { fileURLToPath } from 'url';
 import postsRoutes from './routes/posts.routes.js';
 //import indexRoutes from './routes/index.routes.js';
 
+// use cors
+import cors from 'cors';
+
 // use express
 const app = express();
 
 // to read json data from the backend. Attention before read the routes !
 app.use(express.json());
+
+// to use cors and avoid this
+/*  Access to XMLHttpRequest at 'http://localhost:3000/api/posts' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. */
+
+app.use(cors());
 
 //const __dirname = path.resolve();
 //console.log('In App dirname =', __dirname);
@@ -45,10 +53,9 @@ app.use(
 // *******************
 // to use the routes
 // if you want to use /api as a general url
-//app.use('/api',postsRoutes);
-
-app.use(postsRoutes);
-//app.use(indexRoutes);
+app.use('/api', postsRoutes);
+// or without /api as prefix
+//app.use(postsRoutes);
 
 // and if a wrong route was set
 /* app.use((req, res, next) => {
