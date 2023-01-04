@@ -551,3 +551,213 @@ export const removePost = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+// *
+// *
+// *
+// *********************************************
+// findById() and delete only image from backend
+// *********************************************
+export const removeImageBackend = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(id);
+    const removedPost = await Post.findById(id);
+    console.log('NEW Req body by find by id', removedPost);
+
+    // remove also the image from the backend server
+
+    // if no post by id found
+    if (!removedPost) return res.sendStatus(404);
+    //if (!removedPost) return res.send('no post found!');
+
+    //console.log('SHOW the image object', removedPost.image);
+
+    // the standard way to catch null and undefined simultaneously is this:
+    if (removedPost.image == null) {
+      console.log('Image do not exist');
+    } else {
+      console.log('Image exist');
+      fs.remove(removedPost.image, function (err) {
+        if (err) return console.error(err);
+        console.log('remove success!');
+      });
+    }
+
+    return res.sendStatus(204);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// *
+// *
+// *
+// ******************************************
+// findById() to get an object by id Verb GET
+// ******************************************
+export const getImage = async (req, res) => {
+  try {
+    var file = req.params.image;
+
+    //var postFull = req.params;
+
+    //var path_file = './upload/' + file;
+
+    //console.log('File', file);
+    // console.log('postFull ', postFull);
+    // console.log('Path File', path_file);
+
+    const postObj = await Post.findById(file);
+    //console.log(postObj.image);
+
+    /* if (postObj.image == null) {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Image do not exist!',
+      });
+    } */
+
+    var path_file = postObj.image;
+    //console.log(path.resolve(path_file));
+
+    if (fs.existsSync(path_file)) {
+      // path exists
+      return res.sendFile(path.resolve(path_file));
+    } else {
+      return res.status(404).send({
+        status: 'error',
+        message: 'Image do not exist!',
+      });
+    }
+
+    /* fs.exists(path_file, (exists) => {
+      if (exists) {
+        return res.sendFile(path.resolve(path_file));
+      } else {
+        return res.status(404).send({
+          status: 'error',
+          message: 'Image do not exist!',
+        });
+      }
+    }); */
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// *
+// *
+// *
+// *****************************************************
+// findOneAndUpdate() to update an image by id Verb POST
+// *****************************************************
+export const upload = async (req, res) => {
+  // rename with async/await:
+  async function renameImage(src, dest) {
+    try {
+      await fs.move(src, dest);
+      //console.log('renamed success!');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Recoger el fichero de la petición
+  var file_name = 'Imagen no subida...';
+
+  console.log(req.files);
+
+  if (!req.files) {
+    return res.status(404).send({
+      status: 'error',
+      message: file_name,
+    });
+  }
+
+  // get the image name from fileUpload to be saved it local
+  // upload/tmp-1-1668812220232
+  var filePath = req.files.image.tempFilePath;
+  console.log('filePath', filePath);
+
+  //  Split in LINUX or MAC
+  // [upload]    [tmp-1-1668812220232]
+  var fileSplit = filePath.split('/');
+  console.log('File Split', fileSplit);
+
+  // image/png
+  var mimeType = req.files.image.mimetype.split('/');
+  console.log('mimeType', mimeType);
+
+  // File extention e.g. png jpmg etc
+  var mimeTypeExt = mimeType[1];
+  console.log('mimeTypeExt', mimeTypeExt);
+
+  // file name tmp-1-1668812220232.png
+  var fileName = fileSplit[1] + '.' + mimeTypeExt;
+  console.log('fileName', fileName);
+
+  var file_ext = mimeTypeExt;
+
+  const __dirname = path.resolve();
+  //console.log('In Controller dirname =', __dirname);
+
+  let uploadPath = __dirname + '/upload';
+  //console.log('In Controller uploadPath =', uploadPath);
+
+  const srcToRename = uploadPath + '/' + fileSplit[1];
+  const destToRename = uploadPath + '/' + fileName;
+  //console.log('Source =', srcToRename);
+  //console.log('Dest =', destToRename);
+
+  renameImage(srcToRename, destToRename);
+
+  var urlFileName = 'upload/' + fileName;
+
+  // Comprobar la extension, solo imagenes, si es valida borrar el fichero
+  if (
+    file_ext != 'png' &&
+    file_ext != 'jpg' &&
+    file_ext != 'jpeg' &&
+    file_ext != 'gif'
+  ) {
+    // borrar el archivo subido
+    fs.unlink(urlFileName, (err) => {
+      return res.status(200).send({
+        status: 'error',
+        message: 'La extensión de la imagen no es válida !!!',
+      });
+    });
+  } else {
+    // Si todo es valido, sacando id de la url
+    var postId = req.params.id;
+    console.log('image id', postId);
+
+    if (postId) {
+      // Buscar el articulo, asignarle el nombre de la imagen y actualizarlo
+      Post.findOneAndUpdate(
+        { _id: postId },
+        { image: urlFileName },
+        { new: true },
+        (err, postUpdated) => {
+          if (err || !postUpdated) {
+            return res.status(200).send({
+              status: 'error',
+              message: 'Error al guardar la imagen de articulo !!!',
+            });
+          }
+
+          return res.status(200).send({
+            status: 'success',
+            post: postUpdated,
+          });
+        }
+      );
+    } else {
+      return res.status(200).send({
+        status: 'success',
+        image: urlFileName,
+      });
+    }
+  }
+}; // end upload file
